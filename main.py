@@ -49,9 +49,7 @@ def calculate_shadow_brightness(x, y, light_positions, solid_positions):
 
     # Calculate shadow from each light source
     for light_pos in light_positions:
-        distance = math.sqrt(
-            (x - light_pos[0]) ** 2 + (y - light_pos[1]) ** 2
-        )
+        distance = math.sqrt((x - light_pos[0]) ** 2 + (y - light_pos[1]) ** 2)
         shadow_factor = 1
 
         # Check for shadows from solids
@@ -168,6 +166,7 @@ def draw_ui(selected_tool):
             2,
         )
 
+
 # Main Loop
 run = True
 selected_tool = None
@@ -237,7 +236,9 @@ while run:
         flashlight_pos = []  # Make sure flashlight_pos is always a list
 
     win.fill((0, 0, 0))
-    draw_lighting(light_positions, flashlight_pos, sun_pos, solid_positions)  # Pass light_positions and flashlight_pos
+    draw_lighting(
+        light_positions, flashlight_pos, sun_pos, solid_positions
+    )  # Pass light_positions and flashlight_pos
     draw_ui(selected_tool)
     pygame.display.flip()
 
