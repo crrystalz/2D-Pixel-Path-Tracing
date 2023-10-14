@@ -5,9 +5,8 @@ import random
 # Constants
 PIXEL_SIZE = 10
 GRID_WIDTH, GRID_HEIGHT = 80, 60
-NUM_SAMPLES = 4  # Number of shadow samples per pixel
 LIGHT_INTENSITY = 10000
-SUN_INTENSITY = 500  # Reduced sun intensity
+SUN_INTENSITY = 300000  # Reduced sun intensity
 SHADOW_INTENSITY = 10  # Weakened shadow intensity
 SOLID_COLOR = (0, 0, 255)
 UI_WIDTH = 50
@@ -46,42 +45,45 @@ def is_ray_obstructed(start, end, obstacle):
 
 
 def calculate_shadow_brightness(x, y, light_positions, solid_positions):
-    total_brightness = 0
+    shadow_brightness = 0
 
-    for _ in range(NUM_SAMPLES):
-        shadow_brightness = 0
+    # Calculate shadow from each light source
+    for light_pos in light_positions:
+        distance = math.sqrt(
+            (x - light_pos[0]) ** 2 + (y - light_pos[1]) ** 2
+        )
+        shadow_factor = 1
 
-        # Perform jittered sampling within the pixel
-        sample_x = x + random.uniform(0, 1)
-        sample_y = y + random.uniform(0, 1)
+        # Check for shadows from solids
+        for solid_pos in solid_positions:
+            if is_ray_obstructed([x, y], light_pos, solid_pos):
+                shadow_factor = max(0, 1 - SHADOW_INTENSITY / distance)
+                break
 
-        # Calculate shadow from each light source
-        for light_pos in light_positions:
-            distance = math.sqrt(
-                (sample_x - light_pos[0]) ** 2 + (sample_y - light_pos[1]) ** 2
-            )
-            shadow_factor = 1
+        shadow_brightness += calculate_brightness(
+            distance, LIGHT_INTENSITY, shadow_factor
+        )
 
-            # Check for shadows from solids
-            for solid_pos in solid_positions:
-                if is_ray_obstructed([sample_x, sample_y], light_pos, solid_pos):
-                    shadow_factor = max(0, 1 - SHADOW_INTENSITY / distance)
-                    break
+    # Calculate brightness from the sun
+    distance_to_sun = math.sqrt((x - sun_pos[0]) ** 2 + (y - sun_pos[1]) ** 2)
+    sun_shadow_factor = 1
+    for solid_pos in solid_positions:
+        if is_ray_obstructed([x, y], sun_pos, solid_pos):
+            sun_shadow_factor = max(0, 1 - SHADOW_INTENSITY / distance_to_sun)
+            break
+    sun_brightness = calculate_brightness(
+        distance_to_sun, SUN_INTENSITY, sun_shadow_factor
+    )
 
-            shadow_brightness += calculate_brightness(
-                distance, LIGHT_INTENSITY, shadow_factor
-            )
+    total_brightness = shadow_brightness + sun_brightness
 
-        total_brightness += shadow_brightness
-
-    # Average the sampled shadow values
-    return total_brightness / NUM_SAMPLES
+    return total_brightness
 
 
 def draw_lighting(light_positions, flashlight_pos, sun_pos, solid_positions):
     for x in range(GRID_WIDTH):
         for y in range(GRID_HEIGHT):
-            # Calculate the average shadow brightness using super-sampling
+            # Calculate shadow brightness
             shadow_brightness = calculate_shadow_brightness(
                 x, y, light_positions, solid_positions
             )
