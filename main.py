@@ -1,5 +1,6 @@
 import pygame
 import math
+import asyncio
 
 # Constants
 PIXEL_SIZE = 10
@@ -28,9 +29,25 @@ solid_positions = []
 # Define UI Icon Rectangles
 vertical_margin = (PIXEL_SIZE * GRID_HEIGHT - 3 * ICON_SIZE) // 4
 icons = [
-    {'tool': 'light', 'color': (255, 255, 0), 'rect': pygame.Rect(UI_WIDTH // 4, vertical_margin, ICON_SIZE, ICON_SIZE)},
-    {'tool': 'solid', 'color': (0, 0, 255), 'rect': pygame.Rect(UI_WIDTH // 4, 2 * vertical_margin + ICON_SIZE, ICON_SIZE, ICON_SIZE)},
-    {'tool': 'flashlight', 'color': (255, 165, 0), 'rect': pygame.Rect(UI_WIDTH // 4, 3 * vertical_margin + 2 * ICON_SIZE, ICON_SIZE, ICON_SIZE)}
+    {
+        "tool": "light",
+        "color": (255, 255, 0),
+        "rect": pygame.Rect(UI_WIDTH // 4, vertical_margin, ICON_SIZE, ICON_SIZE),
+    },
+    {
+        "tool": "solid",
+        "color": (0, 0, 255),
+        "rect": pygame.Rect(
+            UI_WIDTH // 4, 2 * vertical_margin + ICON_SIZE, ICON_SIZE, ICON_SIZE
+        ),
+    },
+    {
+        "tool": "flashlight",
+        "color": (255, 165, 0),
+        "rect": pygame.Rect(
+            UI_WIDTH // 4, 3 * vertical_margin + 2 * ICON_SIZE, ICON_SIZE, ICON_SIZE
+        ),
+    },
 ]
 
 
@@ -84,24 +101,35 @@ def draw_lighting(light_positions, flashlight_pos, sun_pos, solid_positions):
 
             # Existing light and sun calculations
             if light_positions or sun_pos:
-                total_brightness += calculate_shadow_brightness(x, y, light_positions, solid_positions)
+                total_brightness += calculate_shadow_brightness(
+                    x, y, light_positions, solid_positions
+                )
 
             # Flashlight brightness calculations if flashlight_pos is provided
             if flashlight_pos:
                 flashlight_brightness = 0
-                distance_to_flashlight = math.sqrt((x - flashlight_pos[0]) ** 2 + (y - flashlight_pos[1]) ** 2)
+                distance_to_flashlight = math.sqrt(
+                    (x - flashlight_pos[0]) ** 2 + (y - flashlight_pos[1]) ** 2
+                )
                 flashlight_shadow_factor = 1
                 for solid_pos in solid_positions:
                     if is_ray_obstructed([x, y], flashlight_pos, solid_pos):
-                        flashlight_shadow_factor = max(0, 1 - SHADOW_INTENSITY / distance_to_flashlight)
+                        flashlight_shadow_factor = max(
+                            0, 1 - SHADOW_INTENSITY / distance_to_flashlight
+                        )
                         break
-                flashlight_brightness += calculate_brightness(distance_to_flashlight, LIGHT_INTENSITY, flashlight_shadow_factor)
+                flashlight_brightness += calculate_brightness(
+                    distance_to_flashlight, LIGHT_INTENSITY, flashlight_shadow_factor
+                )
                 total_brightness += flashlight_brightness
-            
+
             brightness = min(max(int(total_brightness), 0), 255)
 
             current_color = win.get_at((x * PIXEL_SIZE + UI_WIDTH, y * PIXEL_SIZE))[:3]
-            combined_brightness = [min(a + b, 255) for a, b in zip(current_color, (brightness, brightness, brightness))]
+            combined_brightness = [
+                min(a + b, 255)
+                for a, b in zip(current_color, (brightness, brightness, brightness))
+            ]
 
             if [x, y] not in solid_positions:
                 pygame.draw.rect(
@@ -119,20 +147,25 @@ def draw_lighting(light_positions, flashlight_pos, sun_pos, solid_positions):
 
 def draw_ui(selected_tool, show_ui, mouse_pos):
     for icon in icons:
-        if show_ui and icon['rect'].collidepoint(mouse_pos):
-            enlarged_rect = icon['rect'].inflate(ICON_ENLARGE, ICON_ENLARGE)
-            pygame.draw.rect(win, icon['color'], enlarged_rect, border_radius=ICON_ENLARGE // 2)
+        if show_ui and icon["rect"].collidepoint(mouse_pos):
+            enlarged_rect = icon["rect"].inflate(ICON_ENLARGE, ICON_ENLARGE)
+            pygame.draw.rect(
+                win, icon["color"], enlarged_rect, border_radius=ICON_ENLARGE // 2
+            )
         elif show_ui:
-            pygame.draw.rect(win, icon['color'], icon['rect'], border_radius=ICON_SIZE // 2)
-        if icon['tool'] == selected_tool and show_ui:
-            pygame.draw.rect(win, (255, 255, 255), icon['rect'], 2, border_radius=ICON_SIZE // 2)
-
+            pygame.draw.rect(
+                win, icon["color"], icon["rect"], border_radius=ICON_SIZE // 2
+            )
+        if icon["tool"] == selected_tool and show_ui:
+            pygame.draw.rect(
+                win, (255, 255, 255), icon["rect"], 2, border_radius=ICON_SIZE // 2
+            )
 
 
 def run_engine():
     run = True
     clock = pygame.time.Clock()
-    selected_tool = 'light'
+    selected_tool = "light"
     flashlight_pos = None
     show_ui = False
 
@@ -148,19 +181,21 @@ def run_engine():
                 mouse_x, mouse_y = event.pos
                 if show_ui:
                     for icon in icons:
-                        if icon['rect'].collidepoint(mouse_x, mouse_y):
-                            selected_tool = icon['tool']
+                        if icon["rect"].collidepoint(mouse_x, mouse_y):
+                            selected_tool = icon["tool"]
 
                 else:
-                    grid_x, grid_y = (mouse_x - UI_WIDTH) // PIXEL_SIZE, mouse_y // PIXEL_SIZE
-                    if selected_tool == 'light':
+                    grid_x, grid_y = (
+                        mouse_x - UI_WIDTH
+                    ) // PIXEL_SIZE, mouse_y // PIXEL_SIZE
+                    if selected_tool == "light":
                         light_positions.append([grid_x, grid_y])
-                    elif selected_tool == 'solid':
+                    elif selected_tool == "solid":
                         solid_positions.append([grid_x, grid_y])
-                    elif selected_tool == 'flashlight':
+                    elif selected_tool == "flashlight":
                         flashlight_pos = [grid_x, grid_y]
 
-        if selected_tool == 'flashlight':
+        if selected_tool == "flashlight":
             flashlight_on = True
             mx, my = pygame.mouse.get_pos()
             flashlight_pos = [(mx - UI_WIDTH) // PIXEL_SIZE, my // PIXEL_SIZE]
@@ -168,40 +203,42 @@ def run_engine():
             flashlight_on = False
             flashlight_pos = []
 
-        win.fill((0, 0, 0, 0))  # Ensure the alpha channel is set to 0 for full transparency
+        win.fill(
+            (0, 0, 0, 0)
+        )  # Ensure the alpha channel is set to 0 for full transparency
         draw_lighting(light_positions, None, sun_pos, solid_positions)
         if flashlight_on:
             draw_lighting([], flashlight_pos, [], solid_positions)
-            
+
         draw_ui(selected_tool, show_ui, mouse_pos)
         pygame.display.flip()
 
-    pygame.quit()
 
-
-def main_menu():
+async def main_menu():
     win = pygame.display.set_mode(
         (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH, PIXEL_SIZE * GRID_HEIGHT), pygame.SRCALPHA
     )
     pygame.display.set_caption("2D Pixel Path Tracing Engine")
-    
+
     btn_width = 200
     btn_height = 50
     btn_x = (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH - btn_width) // 2
     btn_y = (PIXEL_SIZE * GRID_HEIGHT + btn_height) // 2
-    
+
     running = True
     while running:
         win.fill((0, 0, 0, 0))
-        
+
         mx, my = pygame.mouse.get_pos()
-        
+
         # Define button size and position
         btn_width = 200
         btn_height = 50
         btn_x = (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH - btn_width) // 2
-        btn_y = (PIXEL_SIZE * GRID_HEIGHT + btn_height) // 2 + 40  # Added 40 to create more space
-        
+        btn_y = (
+            PIXEL_SIZE * GRID_HEIGHT + btn_height
+        ) // 2 + 40  # Added 40 to create more space
+
         # Check if mouse is over the button
         button = pygame.Rect(btn_x, btn_y, btn_width, btn_height)
         mouse_over_button = button.collidepoint((mx, my))
@@ -212,34 +249,38 @@ def main_menu():
             btn_height += 10  # Enlarge button height by 10
             btn_x -= 10  # Adjust x to keep center
             btn_y -= 5  # Adjust y to keep center
-        
+
         # Re-define button with possibly updated dimensions
         button = pygame.Rect(btn_x, btn_y, btn_width, btn_height)
         pygame.draw.rect(win, (0, 255, 0), button)
-        
+
         # Draw title
         font = pygame.font.Font(None, 36)
-        title_y = (PIXEL_SIZE * GRID_HEIGHT) // 2 - 40  # Fixed Y-coordinate for title; adjust as desired
+        title_y = (
+            PIXEL_SIZE * GRID_HEIGHT
+        ) // 2 - 40  # Fixed Y-coordinate for title; adjust as desired
         text = font.render("2D Pixel Path Tracing Engine", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(PIXEL_SIZE * GRID_WIDTH // 2 + UI_WIDTH // 2, title_y))
+        text_rect = text.get_rect(
+            center=(PIXEL_SIZE * GRID_WIDTH // 2 + UI_WIDTH // 2, title_y)
+        )
         win.blit(text, text_rect)
 
         # Draw "Run" text on the button
         btn_font = pygame.font.Font(None, 32)
         btn_text = btn_font.render("Run", True, (0, 0, 0))
-        btn_text_rect = btn_text.get_rect(center=(btn_x + btn_width // 2, btn_y + btn_height // 2))
+        btn_text_rect = btn_text.get_rect(
+            center=(btn_x + btn_width // 2, btn_y + btn_height // 2)
+        )
         win.blit(btn_text, btn_text_rect)
-        
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if button.collidepoint((mx, my)):
                     run_engine()
-                    
+
         pygame.display.flip()
-        
-    pygame.quit()
-    
-if __name__ == "__main__":
-    main_menu()
+
+
+asyncio.run(main_menu())
