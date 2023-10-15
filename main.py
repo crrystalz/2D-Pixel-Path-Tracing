@@ -196,19 +196,37 @@ def main_menu():
         
         mx, my = pygame.mouse.get_pos()
         
-        # Draw button
+        # Define button size and position
+        btn_width = 200
+        btn_height = 50
+        btn_x = (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH - btn_width) // 2
+        btn_y = (PIXEL_SIZE * GRID_HEIGHT + btn_height) // 2 + 40  # Added 40 to create more space
+        
+        # Check if mouse is over the button
+        button = pygame.Rect(btn_x, btn_y, btn_width, btn_height)
+        mouse_over_button = button.collidepoint((mx, my))
+
+        # Increase size if mouse is over
+        if mouse_over_button:
+            btn_width += 20  # Enlarge button width by 20
+            btn_height += 10  # Enlarge button height by 10
+            btn_x -= 10  # Adjust x to keep center
+            btn_y -= 5  # Adjust y to keep center
+        
+        # Re-define button with possibly updated dimensions
         button = pygame.Rect(btn_x, btn_y, btn_width, btn_height)
         pygame.draw.rect(win, (0, 255, 0), button)
         
         # Draw title
         font = pygame.font.Font(None, 36)
+        title_y = (PIXEL_SIZE * GRID_HEIGHT) // 2 - 40  # Fixed Y-coordinate for title; adjust as desired
         text = font.render("2D Pixel Path Tracing Engine", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(PIXEL_SIZE * GRID_WIDTH // 2 + UI_WIDTH // 2, btn_y - 40))
+        text_rect = text.get_rect(center=(PIXEL_SIZE * GRID_WIDTH // 2 + UI_WIDTH // 2, title_y))
         win.blit(text, text_rect)
 
         # Draw "Run" text on the button
-        btn_font = pygame.font.Font(None, 32)  # Adjust the size to your liking
-        btn_text = btn_font.render("Run", True, (0, 0, 0))  # Black text
+        btn_font = pygame.font.Font(None, 32)
+        btn_text = btn_font.render("Run", True, (0, 0, 0))
         btn_text_rect = btn_text.get_rect(center=(btn_x + btn_width // 2, btn_y + btn_height // 2))
         win.blit(btn_text, btn_text_rect)
         
@@ -222,6 +240,6 @@ def main_menu():
         pygame.display.flip()
         
     pygame.quit()
-
+    
 if __name__ == "__main__":
     main_menu()
