@@ -129,7 +129,7 @@ def draw_ui(selected_tool, show_ui, mouse_pos):
 
 
 
-def main():
+def run_engine():
     run = True
     clock = pygame.time.Clock()
     selected_tool = 'light'
@@ -179,5 +179,49 @@ def main():
     pygame.quit()
 
 
+def main_menu():
+    win = pygame.display.set_mode(
+        (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH, PIXEL_SIZE * GRID_HEIGHT), pygame.SRCALPHA
+    )
+    pygame.display.set_caption("2D Pixel Path Tracing Engine")
+    
+    btn_width = 200
+    btn_height = 50
+    btn_x = (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH - btn_width) // 2
+    btn_y = (PIXEL_SIZE * GRID_HEIGHT + btn_height) // 2
+    
+    running = True
+    while running:
+        win.fill((0, 0, 0, 0))
+        
+        mx, my = pygame.mouse.get_pos()
+        
+        # Draw button
+        button = pygame.Rect(btn_x, btn_y, btn_width, btn_height)
+        pygame.draw.rect(win, (0, 255, 0), button)
+        
+        # Draw title
+        font = pygame.font.Font(None, 36)
+        text = font.render("2D Pixel Path Tracing Engine", True, (255, 255, 255))
+        text_rect = text.get_rect(center=(PIXEL_SIZE * GRID_WIDTH // 2 + UI_WIDTH // 2, btn_y - 40))
+        win.blit(text, text_rect)
+
+        # Draw "Run" text on the button
+        btn_font = pygame.font.Font(None, 32)  # Adjust the size to your liking
+        btn_text = btn_font.render("Run", True, (0, 0, 0))  # Black text
+        btn_text_rect = btn_text.get_rect(center=(btn_x + btn_width // 2, btn_y + btn_height // 2))
+        win.blit(btn_text, btn_text_rect)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button.collidepoint((mx, my)):
+                    run_engine()
+                    
+        pygame.display.flip()
+        
+    pygame.quit()
+
 if __name__ == "__main__":
-    main()
+    main_menu()
