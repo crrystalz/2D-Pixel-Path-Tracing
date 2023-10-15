@@ -8,17 +8,17 @@ LIGHT_INTENSITY = 10000
 SUN_INTENSITY = 300000
 SHADOW_INTENSITY = 10
 SOLID_COLOR = (0, 0, 255)
-UI_WIDTH = 50
+UI_WIDTH = 0
+UI_HIDE_WIDTH = 50
+ICON_SIZE = 40
+ICON_ENLARGE = 15
 
 # Initialize Pygame
 pygame.init()
 win = pygame.display.set_mode(
-    (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH, PIXEL_SIZE * GRID_HEIGHT)
+    (PIXEL_SIZE * GRID_WIDTH + UI_WIDTH, PIXEL_SIZE * GRID_HEIGHT), pygame.SRCALPHA
 )
 pygame.display.set_caption("2D Pixel Path Tracing Engine")
-
-# Create a font for the title and button text
-font = pygame.font.Font(None, 36)
 
 # Light Source Positions
 light_positions = []
@@ -26,9 +26,12 @@ sun_pos = [GRID_WIDTH - 1, 0]
 solid_positions = []
 
 # Define UI Icon Rectangles
-light_icon_rect = pygame.Rect(UI_WIDTH // 4, 20, UI_WIDTH // 2, UI_WIDTH // 2)
-solid_icon_rect = pygame.Rect(UI_WIDTH // 4, 80, UI_WIDTH // 2, UI_WIDTH // 2)
-flashlight_icon_rect = pygame.Rect(UI_WIDTH // 4, 140, UI_WIDTH // 2, UI_WIDTH // 2)
+vertical_margin = (PIXEL_SIZE * GRID_HEIGHT - 3 * ICON_SIZE) // 4
+icons = [
+    {'tool': 'light', 'color': (255, 255, 0), 'rect': pygame.Rect(UI_WIDTH // 4, vertical_margin, ICON_SIZE, ICON_SIZE)},
+    {'tool': 'solid', 'color': (0, 0, 255), 'rect': pygame.Rect(UI_WIDTH // 4, 2 * vertical_margin + ICON_SIZE, ICON_SIZE, ICON_SIZE)},
+    {'tool': 'flashlight', 'color': (255, 165, 0), 'rect': pygame.Rect(UI_WIDTH // 4, 3 * vertical_margin + 2 * ICON_SIZE, ICON_SIZE, ICON_SIZE)}
+]
 
 
 # Functions
@@ -114,16 +117,16 @@ def draw_lighting(light_positions, flashlight_pos, sun_pos, solid_positions):
                 )
 
 
-def draw_ui(selected_tool):
-    pygame.draw.rect(win, (150, 150, 150), (0, 0, UI_WIDTH, PIXEL_SIZE * GRID_HEIGHT))
-    # Draw Icons
-    pygame.draw.rect(win, (255, 255, 0) if selected_tool == 'light' else (255, 255, 255), light_icon_rect)
-    pygame.draw.rect(win, (0, 0, 255) if selected_tool == 'solid' else (255, 255, 255), solid_icon_rect)
-    pygame.draw.rect(win, (255, 165, 0) if selected_tool == 'flashlight' else (255, 255, 255), flashlight_icon_rect)
-    # Add text or icons...
-    win.blit(font.render("Light", True, (0, 0, 0)), (5, 20))
-    win.blit(font.render("Solid", True, (0, 0, 0)), (5, 80))
-    win.blit(font.render("Flashlight", True, (0, 0, 0)), (5, 140))
+def draw_ui(selected_tool, show_ui, mouse_pos):
+    for icon in icons:
+        if show_ui and icon['rect'].collidepoint(mouse_pos):
+            enlarged_rect = icon['rect'].inflate(ICON_ENLARGE, ICON_ENLARGE)
+            pygame.draw.rect(win, icon['color'], enlarged_rect, border_radius=ICON_ENLARGE // 2)
+        elif show_ui:
+            pygame.draw.rect(win, icon['color'], icon['rect'], border_radius=ICON_SIZE // 2)
+        if icon['tool'] == selected_tool and show_ui:
+            pygame.draw.rect(win, (255, 255, 255), icon['rect'], 2, border_radius=ICON_SIZE // 2)
+
 
 
 def main():
@@ -131,23 +134,25 @@ def main():
     clock = pygame.time.Clock()
     selected_tool = 'light'
     flashlight_pos = None
+    show_ui = False
 
     while run:
+        mouse_pos = pygame.mouse.get_pos()
+        show_ui = mouse_pos[0] < UI_HIDE_WIDTH
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.pos
-                grid_x, grid_y = (mouse_x - UI_WIDTH) // PIXEL_SIZE, mouse_y // PIXEL_SIZE
-                if 0 <= mouse_x < UI_WIDTH:
-                    if light_icon_rect.collidepoint(mouse_x, mouse_y):
-                        selected_tool = 'light'
-                    elif solid_icon_rect.collidepoint(mouse_x, mouse_y):
-                        selected_tool = 'solid'
-                    elif flashlight_icon_rect.collidepoint(mouse_x, mouse_y):
-                        selected_tool = 'flashlight'
+                if show_ui:
+                    for icon in icons:
+                        if icon['rect'].collidepoint(mouse_x, mouse_y):
+                            selected_tool = icon['tool']
+
                 else:
+                    grid_x, grid_y = (mouse_x - UI_WIDTH) // PIXEL_SIZE, mouse_y // PIXEL_SIZE
                     if selected_tool == 'light':
                         light_positions.append([grid_x, grid_y])
                     elif selected_tool == 'solid':
@@ -155,7 +160,6 @@ def main():
                     elif selected_tool == 'flashlight':
                         flashlight_pos = [grid_x, grid_y]
 
-        # Update flashlight position if the tool is selected
         if selected_tool == 'flashlight':
             flashlight_on = True
             mx, my = pygame.mouse.get_pos()
@@ -164,15 +168,12 @@ def main():
             flashlight_on = False
             flashlight_pos = []
 
-        win.fill((0, 0, 0))
-
-        # Drawing with pre-existing light positions
+        win.fill((0, 0, 0, 0))  # Ensure the alpha channel is set to 0 for full transparency
         draw_lighting(light_positions, None, sun_pos, solid_positions)
-        # Overlaying flashlight if enabled
         if flashlight_on:
             draw_lighting([], flashlight_pos, [], solid_positions)
             
-        draw_ui(selected_tool)
+        draw_ui(selected_tool, show_ui, mouse_pos)
         pygame.display.flip()
 
     pygame.quit()
