@@ -1,4 +1,4 @@
-# 2D Pixel Path Tracing Engine
+# ☀️ 2D Pixel Path Tracing Engine
 This 2D Pixel Path Tracing Engine was developed using Python and the Pygame library. The engine allows you to create and visualize lighting effects in a 2D grid environment. You can add light sources, solid obstacles, and even a flashlight to observe how light interacts with the environment.
 
 ## Features
